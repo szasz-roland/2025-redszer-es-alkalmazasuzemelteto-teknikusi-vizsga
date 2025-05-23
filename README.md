@@ -1,0 +1,1 @@
+# 2025-rendszer--s-alkalmaz-s-zemeltet--tekniokusi-vizsgaremek
