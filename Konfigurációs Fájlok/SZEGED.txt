@@ -1,0 +1,696 @@
+!=======================SZEGED-Router===========================
+!
+Current configuration : 3574 bytes
+!
+version 15.1
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+service password-encryption
+!
+hostname SZEGED-Router
+!
+!
+!
+enable secret securicity_ena
+!
+!
+!
+!
+!
+!
+no ip cef
+ipv6 unicast-routing
+!
+no ipv6 cef
+!
+ipv6 dhcp pool dhcp_pool_A
+ address prefix 2001:DB8:ACAD:A::/64 lifetime 172800 86400
+ domain-name roadzo.szeged.hu
+!
+ipv6 dhcp pool dhcp_pool_B
+ address prefix 2001:DB8:ACAD:B::/64 lifetime 172800 86400
+ domain-name roadzo.szeged.hu
+!
+!
+!
+username Admin privilege 15 secret securycity_admin
+!
+!
+license udi pid CISCO1941/K9 sn FTX1524U7TJ-
+license boot module c1900 technology-package securityk9
+!
+!
+!
+crypto isakmp policy 5
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 7200
+!
+crypto isakmp key DEBSZEGKEY address 10.10.10.2
+!
+!
+!
+crypto ipsec transform-set DEBSZEGSET esp-aes 256 esp-sha-hmac
+!
+crypto map DEBSZEGMAP 5 ipsec-isakmp 
+ set peer 10.10.10.2
+ set security-association lifetime seconds 7200
+ set transform-set DEBSZEGSET 
+ match address DEBSZEG
+!
+!
+!
+!
+ip ssh version 2
+no ip domain-lookup
+ip domain-name roadzo.szeged.hu
+!
+!
+spanning-tree mode pvst
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 172.16.10.1 255.255.255.0
+!
+interface GigabitEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 172.16.20.1 255.255.255.0
+!
+interface GigabitEthernet0/0.90
+ encapsulation dot1Q 90 native
+ ip address 172.16.90.1 255.255.255.0
+!
+interface GigabitEthernet0/0.150
+ encapsulation dot1Q 150
+ no ip address
+!
+interface GigabitEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1.30
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+ ipv6 address 2001:DB8:ACAD:A::1/64
+ ipv6 nd managed-config-flag
+ ipv6 enable
+ ipv6 dhcp server dhcp_pool_A
+!
+interface GigabitEthernet0/1.40
+ encapsulation dot1Q 40
+ ip address 192.168.40.1 255.255.255.0
+ ipv6 address 2001:DB8:ACAD:B::1/64
+ ipv6 nd managed-config-flag
+ ipv6 enable
+ ipv6 dhcp server dhcp_pool_B
+!
+interface GigabitEthernet0/1.99
+ encapsulation dot1Q 99 native
+ ip address 192.168.99.1 255.255.255.0
+ ipv6 enable
+!
+interface GigabitEthernet0/1.150
+ encapsulation dot1Q 150
+ no ip address
+ ipv6 enable
+!
+interface FastEthernet0/0/0
+ switchport mode access
+!
+interface FastEthernet0/0/1
+ switchport mode access
+!
+interface FastEthernet0/0/2
+ switchport mode access
+!
+interface FastEthernet0/0/3
+ switchport mode access
+!
+interface Serial0/1/0
+ ip address 10.10.10.6 255.255.255.252
+ crypto map DEBSZEGMAP
+!
+interface Serial0/1/1
+ no ip address
+ clock rate 2000000
+ shutdown
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router ospf 1
+ router-id 2.2.2.2
+ log-adjacency-changes
+ network 10.10.10.4 0.0.0.3 area 0
+ network 172.16.10.0 0.0.0.255 area 0
+ network 172.16.20.0 0.0.0.255 area 0
+ network 172.16.90.0 0.0.0.255 area 0
+ network 192.168.30.0 0.0.0.255 area 0
+ network 192.168.40.0 0.0.0.255 area 0
+ network 192.168.99.0 0.0.0.255 area 0
+!
+ip classless
+!
+ip flow-export version 9
+!
+!
+ip access-list extended DEBSZEG
+ permit ip 172.16.90.0 0.0.0.255 172.50.90.0 0.0.0.255
+ permit udp 172.16.90.0 0.0.0.255 172.50.90.0 0.0.0.255
+ permit esp 172.16.90.0 0.0.0.255 172.50.90.0 0.0.0.255
+ permit ahp 172.16.90.0 0.0.0.255 172.50.90.0 0.0.0.255
+!
+banner motd ^CKi itt belpsz, hagyj fel minden remnnyel!^C
+!
+!
+!
+!
+line con 0
+ password securicity_con
+ login
+!
+line aux 0
+!
+line vty 0 4
+ password securicity_vty
+ login local
+ transport input ssh
+!
+!
+!
+end
+!
+!=======================SZEGED-SW1===========================
+!
+!======== AlapKonfiguracio ========
+ena
+conf term
+hostname SZEGED-SW1
+no ip domain-lookup
+ip domain-name roadzo.szeged.hu
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+enable secret securicity_ena
+username Admin privilege 15 secret securycity_admin
+line console 0
+password securicity_con
+login
+exit
+line vty 0 15
+password securicity_vty
+login
+login local
+transport input ssh
+exit
+service password-encryption
+banner motd +Ki itt belépsz, hagyj fel minden reménnyel!+
+!
+!
+!
+!======== Vlan létrehozás ========
+vlan 10
+name vezetoseg
+vlan 20
+name hr
+vlan 90
+name management
+vlan 150
+name hang
+vlan 666
+name feketelyuk
+exit
+!
+!
+!
+!======== Portok Vlanhoz Rendelése ========
+interface range f0/1-2
+mls qos trust cos
+switchport mode access
+switchport access vlan 10
+switchport voice vlan 150
+exit
+interface f0/10
+switchport mode access
+switchport access vlan 10
+exit
+!
+!
+!
+!======== Felügyeleti Vlan Beállítása ========   KERDEZNI
+interface vlan 90
+ip address 172.16.90.2 255.255.255.0
+exit
+!
+!
+!
+!======== Alapértelmezett Átjáró megadása ========
+ip default-gateway 172.16.90.1
+!
+!
+!
+!====== EtherChanel Létrehozása ======
+interface range f0/23-24
+channel-group 1 mode active
+exit
+interface Port-channel 1
+switchport mode trunk
+switchport trunk allowed vlan 10,20,90,150
+switchport trunk native vlan 90
+exit
+!
+!
+!
+!====== Nem Használt Portok Lekapcsolása ======
+interface range f0/3-9, f0/11-22, g0/1-2
+switchport mode access
+switchport access vlan 666
+sh
+exit
+!
+!
+!
+!
+!=======================SZEGED-SW2===========================
+!
+!======== Alap Konfiguracio ========
+ena
+conf term
+hostname SZEGED-SW2
+no ip domain-lookup
+ip domain-name roadzo.szeged.hu
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+enable secret securicity_ena
+username Admin privilege 15 secret securycity_admin
+line console 0
+password securicity_con
+login
+exit
+line vty 0 15
+password securicity_vty
+login
+login local
+transport input ssh
+exit
+service password-encryption
+banner motd +Ki itt belépsz, hagyj fel minden reménnyel!+
+!
+!
+!
+!======== Vlan létrehozás ========
+vlan 10
+name vezetoseg
+vlan 20
+name hr
+vlan 90
+name management
+vlan 150
+name hang
+vlan 666
+name feketelyuk
+exit
+!
+!
+!
+!======== Portok Vlanhoz Rendelése ========
+interface range f0/1-2
+switchport mode access
+mls qos trust cos
+switchport access vlan 90
+switchport voice vlan 150
+exit
+!
+interface range f0/10-11
+switchport mode access
+switchport access vlan 90
+exit
+!
+interface g0/1
+switchport mode access
+switchport access vlan 90
+exit
+!
+!
+!
+!======== Felügyeleti Vlan Beállítása ========   KERDEZNI
+interface vlan 90
+ip address 172.16.90.3 255.255.255.0
+exit
+!
+!
+!
+!======== Alapértelmezett Átjáró megadása ========
+ip default-gateway 172.16.90.1
+!
+!
+!
+!====== EtherChanel Létrehozása ======
+interface range f0/23-24
+channel-group 1 mode active
+exit
+interface Port-channel 1
+switchport mode trunk
+switchport trunk allowed vlan 10,20,90,150
+switchport trunk native vlan 90
+exit
+!
+interface range f0/21-22
+channel-group 2 mode active
+exit
+interface Port-channel 2
+switchport mode trunk
+switchport trunk allowed vlan 10,20,90,150
+switchport trunk native vlan 90
+exit
+!
+!
+!
+!====== Nem Használt Portok Lekapcsolása ======
+interface range f0/3-9, f0/12-20
+switchport mode access
+switchport access vlan 666
+sh
+exit
+!
+!
+!
+!====== TrunkPort Beállítása a Router Felé ======
+interface g0/1
+switchport mode trunk
+switchport trunk allowed vlan 10,20,90,150
+switchport trunk native vlan 90
+exit
+!
+!
+!
+!
+!=======================SZEGED-SW3===========================
+!
+!======== Alap Konfiguracio ========
+ena
+conf term
+hostname SZEGED-SW3
+no ip domain-lookup
+ip domain-name roadzo.szeged.hu
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+enable secret securicity_ena
+username Admin privilege 15 secret securycity_admin
+line console 0
+password securicity_con
+login
+exit
+line vty 0 15
+password securicity_vty
+login
+login local
+transport input ssh
+exit
+service password-encryption
+banner motd +Ki itt belépsz, hagyj fel minden reménnyel!+
+!
+!
+!
+!======== Vlan létrehozás ========
+vlan 10
+name vezetoseg
+vlan 20
+name hr
+vlan 90
+name management
+vlan 150
+name hang
+vlan 666
+name feketelyuk
+exit
+!
+!
+!
+!======== Portok Vlanhoz Rendelése ========
+interface range f0/1-2
+mls qos trust cos
+switchport mode access
+switchport access vlan 20
+switchport voice vlan 150
+exit
+interface f0/10
+switchport mode access
+switchport access vlan 20
+exit
+!
+!
+!
+!======== Felügyeleti Vlan Beállítása ========   KERDEZNI
+interface vlan 90
+ip address 172.16.90.4 255.255.255.0
+exit
+!
+!
+!
+!======== Alapértelmezett Átjáró megadása ========
+ip default-gateway 172.16.90.1
+!
+!
+!
+!====== EtherChanel Létrehozása ======
+interface range f0/21-22
+channel-group 2 mode active
+exit
+interface Port-channel 2
+switchport mode trunk
+switchport trunk allowed vlan 10,20,90,150
+switchport trunk native vlan 90
+exit
+!
+!
+!
+!====== Nem Használt Portok Lekapcsolása ======
+interface range f0/3-9, f0/11-20, f0/23-24, g0/1-2
+switchport mode access
+switchport access vlan 666
+sh
+exit
+!
+!
+!
+!
+!=======================SZEGED-SW4===========================
+!
+!======== Alap Konfiguracio ========
+sdm prefer dual-ipv4-and-ipv6 default
+reload
+!
+!
+ena
+conf term
+hostname SZEGED-SW4
+no ip domain-lookup
+ip domain-name roadzo.szeged.hu
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+enable secret securicity_ena
+username Admin privilege 15 secret securycity_admin
+line console 0
+password securicity_con
+login
+exit
+line vty 0 15
+password securicity_vty
+login
+login local
+transport input ssh
+exit
+service password-encryption
+banner motd +Ki itt belépsz, hagyj fel minden reménnyel!+
+!
+!
+!
+!======== Vlan létrehozás ========
+vlan 30
+name penzugy
+exit
+vlan 40
+name kommunikacioPR
+exit
+vlan 99
+name native
+exit
+vlan 666
+name feketelyuk
+exit
+!
+!
+!
+!======== Portok Vlanhoz Rendelése ========
+interface range f0/1-3
+switchport mode access
+mls qos trust cos
+switchport access vlan 30
+switchport voice vlan 150
+exit
+!
+interface f0/10
+switchport mode access
+switchport access vlan 30
+exit
+!
+!
+!
+!======== Felügyeleti Vlan Beállítása ========   KERDEZNI
+interface vlan 99 
+ip address 192.168.99.2 255.255.255.0  
+exit
+!
+!
+!
+!======== Alapértelmezett Átjáró megadása ========
+ip default-gateway 192.168.99.1
+!
+!
+!
+!====== EtherChanel Létrehozása ======
+interface range f0/23-24
+channel-group 1 mode active
+exit
+interface Port-channel 1
+switchport mode trunk
+switchport trunk allowed vlan 30,40,99,150
+switchport trunk native vlan 99
+exit
+!
+!
+!
+!====== Nem Használt Portok Lekapcsolása ======
+interface range f0/4-9, f0/11-22, g0/2
+switchport mode access
+switchport access vlan 666
+sh
+!
+!
+!
+!====== TrunkPort Beállítása a Router Felé ======
+interface g0/1
+switchport mode trunk
+switchport trunk allowed vlan 30,40,99,150
+switchport trunk native vlan 99
+exit
+!
+!
+!
+!
+!=======================SZEGED-SW5===========================
+!
+!======== Alap Konfiguracio ========
+sdm prefer dual-ipv4-and-ipv6 default
+reload
+!
+!
+ena
+conf term
+hostname SZEGED-SW5
+no ip domain-lookup
+ip domain-name roadzo.szeged.hu
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+enable secret securicity_ena
+username Admin privilege 15 secret securycity_admin
+line console 0
+password securicity_con
+login
+exit
+line vty 0 15
+password securicity_vty
+login
+login local
+transport input ssh
+exit
+service password-encryption
+banner motd +Ki itt belépsz, hagyj fel minden reménnyel!+
+!
+!
+!
+!======== Vlan létrehozás ========
+vlan 30
+name penzugy
+exit
+vlan 40
+name kommunikacioPR
+exit
+vlan 99
+name native
+exit
+vlan 666
+name feketelyuk
+exit
+!
+!
+!
+!======== Portok Vlanhoz Rendelése ========
+interface range f0/1-3
+switchport mode access
+mls qos trust cos
+switchport access vlan 40
+switchport voice vlan 150
+exit
+!
+interface f0/10
+switchport mode access
+switchport access vlan 40
+exit
+!
+interface f0/4-5
+switchport mode access
+mls qos trust cos
+switchport access vlan 99
+exit
+!
+!
+!
+!======== Felügyeleti Vlan Beállítása ========   KERDEZNI
+interface vlan 99 
+ip address 192.168.99.3 255.255.255.0  
+exit
+!
+!
+!
+!======== Alapértelmezett Átjáró megadása ========
+ip default-gateway 192.168.99.1
+!
+!
+!
+!====== EtherChanel Létrehozása ======
+interface range f0/23-24
+channel-group 1 mode active
+exit
+interface Port-channel 1
+switchport mode trunk
+switchport trunk allowed vlan 30,40,99,150
+switchport trunk native vlan 99
+exit
+!
+!
+!
+!====== Nem Használt Portok Lekapcsolása ======
+interface range f0/6-9, f0/11-22, g0/1-2
+switchport mode access
+switchport access vlan 666
+sh
+exit
+
+
+====FTP=====
+felh: ftpuser
+jel.: 123

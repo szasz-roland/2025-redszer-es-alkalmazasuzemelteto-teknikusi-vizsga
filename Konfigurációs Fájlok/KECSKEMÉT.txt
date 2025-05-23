@@ -1,0 +1,106 @@
+!
+enable 
+!
+configure terminal
+!
+hostname raodzo.kecskemet.hu
+!
+enable secret fw 
+!
+!
+router ospf 1
+ router-id 6.6.6.6
+ network 172.16.0.0 255.255.255.224 area 0
+ network 200.200.20.0 255.255.255.248 area 0
+ default-information originate
+ exit
+!
+! Default Route on Firewall
+route OUTSIDE 0.0.0.0 0.0.0.0 209.165.100.5
+
+! Allow all trafix to the INSIDE LAN
+! access-list ACL-IN extended permit ip any any
+! access-group ACL-IN in interface INSIDE
+!
+! -------------------------------------------------------------------------------------------- 
+!
+! INSIDE to DMZ
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 200.200.20.0 255.255.255.248
+! INSIDE to OUTSIDE (ORIGO networks only)
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 172.50.20.0 255.255.255.0
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 11.11.11.0 255.255.255.0
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 172.16.20.0 255.255.255.0
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 192.168.0.0 255.255.0.0
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 host 209.165.100.2
+! access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 172.16.50.64 255.255.255.224
+access-list INSIDE-ACL extended permit ip 172.16.0.0 255.255.255.224 host 172.16.50.66
+access-group INSIDE-ACL in interface INSIDE
+!
+! --------------------------------------------------------------------------------------------
+!
+! DMZ-TO-INSIDE
+access-list DMZ-ACL extended permit ip 200.200.20.0 255.255.255.248 172.16.0.0 255.255.255.224
+! DMZ to OUTSIDE (ORIGO networks only)
+access-list DMZ-ACL extended permit ip 200.200.20.0 255.255.255.248 172.50.20.0 255.255.255.0
+access-list DMZ-ACL extended permit ip 200.200.20.0 255.255.255.248 11.11.11.0 255.255.255.0
+access-list DMZ-ACL extended permit ip 200.200.20.0 255.255.255.248 172.16.20.0 255.255.255.0
+access-list DMZ-ACL extended permit ip 200.200.20.0 255.255.255.248 192.168.0.0 255.255.0.0
+access-list DMZ-ACL extended permit ip host 209.165.9.3 172.16.0.0 255.255.255.224
+access-list DMZ-ACL extended permit ip 200.200.20.0 255.255.255.248 host 209.165.100.2
+! Adding ACL to the DMZ port
+access-group DMZ-ACL in interface DMZ
+!
+! --------------------------------------------------------------------------------------------
+!
+! OUTSIDE to DMZ (ORIGO networks only)
+access-list OUTSIDE-ACL extended permit ip 172.50.20.0 255.255.255.0 200.200.20.0 255.255.255.248
+access-list OUTSIDE-ACL extended permit ip 11.11.11.0 255.255.255.0 200.200.20.0 255.255.255.248
+access-list OUTSIDE-ACL extended permit ip 172.16.20.0 255.255.255.0 200.200.20.0 255.255.255.248
+access-list OUTSIDE-ACL extended permit ip 192.168.0.0 255.255.0.0 200.200.20.0 255.255.255.248
+access-list OUTSIDE-ACL extended permit ip host 209.165.100.2 200.200.20.0 255.255.255.248
+
+! OUTSIDE to INSIDE (ORIGO networks only)
+access-list OUTSIDE-ACL extended permit ip 172.50.20.0 255.255.255.0 172.16.0.0 255.255.255.224
+access-list OUTSIDE-ACL extended permit ip 11.11.11.0 255.255.255.0 172.16.0.0 255.255.255.224
+access-list OUTSIDE-ACL extended permit ip 172.16.20.0 255.255.255.0 172.16.0.0 255.255.255.224
+access-list OUTSIDE-ACL extended permit ip 192.168.0.0 255.255.0.0 172.16.0.0 255.255.255.224
+access-list OUTSIDE-ACL extended permit ip host 209.165.100.2 172.16.0.0 255.255.255.224
+access-list OUTSIDE-ACL extended permit ip host 209.165.9.3 172.16.0.0 255.255.255.224
+! Adding ACL to the OUTSIDE port
+access-group OUTSIDE-ACL in interface OUTSIDE
+!
+! --------------------------------------------------------------------------------------------
+!
+do write
+!
+!
+!
+!
+!================================================================================
+!
+!
+!
+enable
+configure terminal
+hostname sw-szint-0
+!
+enable secret switch1
+service password-encryption
+banner motd "Csak Engedelyezett Felhasznaloknak"
+!
+no cdp run
+no ip domain-lookup
+username switch1 privilege 15 secret switch1
+ip domain-name roadzo.kecskemet.hu
+crypto key generate rsa general-keys modulus 2048
+ip ssh version 2
+!
+line vty 0 15
+ login local
+ transport input ssh
+ exec-timeout 5 0
+!
+line console 0
+ login local 
+ exec-timeout 5 0
+!
