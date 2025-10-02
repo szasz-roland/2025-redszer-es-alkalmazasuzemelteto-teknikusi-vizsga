@@ -163,4 +163,3 @@ We welcome contributions that can help improve these study materials for everyon
 This project is not licensed under a specific open-source license. All rights are reserved by the project maintainers. Unauthorized distribution or modification is not permitted without explicit consent.
 
 **Copyright (c) 2024 szasz-roland. All rights reserved.**
-```
